@@ -6,8 +6,7 @@ RUN npm install
 
 COPY src/ui/ .
 
-# Fix EMFILE: too many open files by increasing ulimit and potentially limiting vite concurrency
-RUN ulimit -n 65535 && npm run build
+RUN npm run build:fixed
 
 
 FROM rust:1.80-slim-bookworm AS backend-builder
