@@ -9,7 +9,7 @@ COPY src/ui/ .
 RUN npm run build:fixed
 
 
-FROM docker.io/library/rust:1.80-slim-bookworm AS backend-builder
+FROM docker.io/library/rust:1.88-slim-bookworm AS backend-builder
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev curl unzip && rm -rf /var/lib/apt/lists/*
@@ -25,12 +25,12 @@ FROM docker.io/library/debian:bookworm-slim
 WORKDIR /app
 
 
-RUN apt-get update && apt-get install -y 
-    libssl3 
-    ca-certificates 
-    curl 
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 
-    && apt-get install -y nodejs 
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    ca-certificates \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -41,13 +41,10 @@ COPY --from=frontend-builder /app/ui/package*.json ./ui/
 RUN cd ui && npm install --omit=dev
 
 
-RUN echo '#!/bin/sh
-
-PORT=3000 node ui/index.js & 
-
-./backend
-
-' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
+    echo 'PORT=3000 node ui/index.js &' >> /app/entrypoint.sh && \
+    echo './backend' >> /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
 
 EXPOSE 3000 3232
 
