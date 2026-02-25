@@ -1,4 +1,4 @@
-FROM node:20-slim AS frontend-builder
+FROM docker.io/library/node:20-slim AS frontend-builder
 WORKDIR /app/ui
 
 COPY src/ui/package*.json src/ui/svelte.config.js src/ui/tsconfig.json ./
@@ -9,7 +9,7 @@ COPY src/ui/ .
 RUN npm run build:fixed
 
 
-FROM rust:1.80-slim-bookworm AS backend-builder
+FROM docker.io/library/rust:1.80-slim-bookworm AS backend-builder
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
@@ -21,7 +21,7 @@ COPY src ./src
 RUN touch src/main.rs && cargo build --release
 
 
-FROM debian:bookworm-slim
+FROM docker.io/library/debian:bookworm-slim
 WORKDIR /app
 
 
