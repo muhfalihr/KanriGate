@@ -250,7 +250,7 @@
 
 		<div class="edit-body">
 			<div class="section">
-				<label class="s-label">New Assignment</label>
+				<h4 class="s-label">New Assignment</h4>
 				<div class="form-card">
 					<select bind:value={newTemplate} class="stiff-select">
 						{#each templates as t}<option value={t}>{t}</option>{/each}
@@ -269,7 +269,7 @@
 			</div>
 
 			<div class="section">
-				<label class="s-label">Current Permissions</label>
+				<h4 class="s-label">Current Permissions</h4>
 				<div class="role-list">
 					{#each roleAssignments as role, i (role.template + role.namespaces.join())}
 						<div class="role-item {role.isSaved ? '' : 'is-new'}" transition:slide={{ duration: 200 }}>

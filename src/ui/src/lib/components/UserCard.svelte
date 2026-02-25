@@ -39,6 +39,7 @@
 
 <div
 	class="user-card {active ? 'active' : ''}"
+	role="button"
 	tabindex="0"
 	onclick={handleCardClick}
 	onkeydown={(e) => e.key === 'Enter' && handleCardClick()}

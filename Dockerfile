@@ -1,7 +1,7 @@
 FROM node:20-slim AS frontend-builder
 WORKDIR /app/ui
 
-COPY src/ui/package*.json ./
+COPY src/ui/package*.json src/ui/svelte.config.js src/ui/tsconfig.json ./
 RUN npm install
 
 COPY src/ui/ .

@@ -223,7 +223,7 @@
 		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
 	}
 
-	.spin {
+	:global(.spin) {
 		animation: spin 1s linear infinite;
 	}
 

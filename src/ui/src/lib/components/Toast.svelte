@@ -29,8 +29,7 @@
 </script>
 
 {#if visible}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<div class="toast {type}" onclick={close} tabindex="0" role="alert">
+	<div class="toast {type}" onclick={close} onkeydown={(e) => e.key === 'Enter' && close()} role="button" tabindex="0">
 		<span class="toast-message">{message}</span>
 		<button class="toast-close" aria-label="Close" onclick={(e) => { e.stopPropagation(); close(); }}>&times;</button>
 	</div>

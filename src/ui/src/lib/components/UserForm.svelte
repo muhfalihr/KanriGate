@@ -78,17 +78,18 @@
 
 		<div class="card-body">
 			<div class="field">
-				<label>Service Account Name</label>
-				<input type="text" bind:value={username} placeholder="e.g. storage-manager" />
+				<label for="sa-name">Service Account Name</label>
+				<input id="sa-name" type="text" bind:value={username} placeholder="e.g. storage-manager" />
 			</div>
 
 			<div class="divider"></div>
 
 			<div class="field">
-				<label>Add Role Mapping</label>
+				<h4 class="field-label">Add Role Mapping</h4>
 				<div class="assignment-box">
 					<div class="select-grid">
 						<select
+							aria-label="Select Template"
 							onchange={(e) => {
 								const v = (e.target as HTMLSelectElement).value;
 								selectedTemplate = { value: v, label: v };
@@ -124,7 +125,7 @@
 			<div class="divider"></div>
 
 			<div class="field">
-				<label>Global Access Override</label>
+				<h4 class="field-label">Global Access Override</h4>
 				<div class="radio-group">
 					{#each ['none', 'read-only', 'read-write'] as level}
 						<label class="radio-label {clusterAccess === level ? 'active' : ''}">
@@ -193,7 +194,7 @@
 		gap: 2rem;
 	}
 
-	.field label {
+	.field label, .field-label {
 		display: block;
 		font-size: 0.75rem;
 		font-weight: 800;
@@ -201,6 +202,7 @@
 		color: var(--text-muted);
 		margin-bottom: 0.75rem;
 		letter-spacing: 0.5px;
+		margin-top: 0;
 	}
 
 	.divider {
