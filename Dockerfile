@@ -12,7 +12,7 @@ RUN npm run build:fixed
 FROM docker.io/library/rust:1.80-slim-bookworm AS backend-builder
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y pkg-config libssl-dev curl unzip && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
