@@ -1,0 +1,6 @@
+target/
+node_modules/
+src/ui/node_modules/
+.git/
+.env
+src/ui/.svelte-kit/

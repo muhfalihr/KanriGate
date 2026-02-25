@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: 16px;
+
+  /* Refined Palette */
+  --primary: #2980b9;
+  --primary-dark: #2c3e50;
+  --primary-light: #3498db;
+  --background: #f4f7f6;
+  --surface: #ffffff;
+  --surface-light: #fdfdfe;
+  --text: #2c3e50;
+  --text-muted: #636e72;
+  --border: #e1e8e8;
+  
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  color-scheme: light;
+  color: var(--text);
+  background-color: var(--background);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth Buttons */
+button {
+  border-radius: 8px; /* Balanced */
+  padding: 0.6rem 1.2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button.primary {
+  background: var(--primary);
+  color: white;
+}
+
+button.primary:hover {
+  background: var(--primary-light);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+/* Smooth Inputs */
+input, select, textarea {
+  font-family: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  background: var(--surface);
+  transition: var(--transition);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d8d8;
+  border-radius: 10px;
+}
