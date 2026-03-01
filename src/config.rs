@@ -19,7 +19,7 @@ pub mod sa {
 }
 
 pub mod permissions {
-    pub const TEMPLATES: [&str; 3] = ["operation", "monitor", "developer"];
+    pub const TEMPLATES: [&str; 3] = ["operation", "monitoring", "developer"];
     pub const CLUSTER: [&str; 3] = ["admin", "read-only", "none"];
 }
 
@@ -82,6 +82,10 @@ pub struct BaseConfig {
 
     #[validate(custom(function="validate_control_plane_address"))]
     pub control_plane_address: String,
+
+    pub admin_username: String,
+    pub admin_password_hash: String,
+    pub jwt_secret: String,
 }
 
 impl BaseConfig {
@@ -92,6 +96,9 @@ impl BaseConfig {
             .set_default("port", 3232)?
             .set_default("cluster_name", "kubernetes-admin@kubernetes")?
             .set_default("control_plane_address", "https://172.17.0.3:6443")?
+            .set_default("admin_username", "admin")?
+            .set_default("admin_password_hash", "$argon2id$v=19$m=19456,t=2,p=1$Z3YxeXJ3emx6cWZ6Z3YxeXJ3emx6cWZ6$R0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0")? // default 'admin' password hash
+            .set_default("jwt_secret", "replace-with-a-secure-secret-key")?
             .add_source(
                 config::Environment::with_prefix("APP")
                     .try_parsing(true)

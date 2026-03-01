@@ -6,50 +6,44 @@
 
 Managing Kubernetes RBAC can be complex and error-prone. Kanrigate simplifies this by providing:
 - A clean, intuitive Web UI for managing ServiceAccounts, Roles, and Bindings.
+- **Secure Authentication**: Protected dashboard with Argon2id password hashing and JWT sessions.
 - Pre-defined, industry-standard RBAC templates for common personas.
 - Real-time validation and management of cluster-wide and namespaced resources.
 
 ## 🛠 Tech Stack
 
-- **Frontend**: SvelteKit (TypeScript, Tailwind-ready)
+- **Frontend**: SvelteKit (TypeScript, Svelte 5 Runes)
 - **Backend**: Rust (Axum/Tokio stack)
-- **Database**: In-memory state with Kubernetes as the source of truth.
+- **Security**: Argon2id for hashing, JWT for session management.
+- **Database**: Stateless (Kubernetes API as the source of truth).
 - **Deployment**: Docker (Multi-stage builds), Helm 3.
 
 ## 🏗 Architecture
 
 Kanrigate is designed to run as a single containerized unit:
 1.  **Backend (Rust)**: Handles high-speed API requests, Kubernetes cluster communication, and RBAC logic.
-2.  **Frontend (SvelteKit)**: Served via Node.js within the same container, providing a responsive SPA interface.
-3.  **Entrypoint**: A unified script that orchestrates both services, exposing the UI on port `3000` and the API on port `3232`.
+2.  **Frontend (SvelteKit)**: Served via Node.js (or Adapter-Node in production), providing a responsive SPA interface.
+3.  **Authentication Middleware**: Every API request (except login) is validated against a JWT token stored in a secure HttpOnly cookie.
 
 ## 📦 Getting Started
 
 ### Prerequisites
 - Kubernetes Cluster
-- Docker & Node.js (for local development)
 - Helm 3 (for deployment)
 
-### Local Development
+### 🔐 Generate Admin Hash
+Use the built-in tool to generate a secure Argon2id hash for your admin password:
 
-1. **Frontend**:
-   ```bash
-   cd src/ui
-   npm install
-   npm run dev
-   ```
+1.  **Edit the tool**:
+    Open `src/bin/hash_tool.rs` and change `let password = "password";` to your desired password.
 
-2. **Backend**:
-   ```bash
-   # Ensure you have a valid Kubeconfig
-   cargo run
-   ```
+2.  **Run the tool**:
+    ```bash
+    cargo run --bin hash_tool
+    ```
 
-### Docker
-Build the unified image:
-```bash
-docker build -t kanrigate:latest .
-```
+3.  **Copy the output**:
+    Copy the generated hash into your `values.yaml` under `secrets.APP_ADMIN_PASSWORD_HASH`.
 
 ## ☸️ Deployment with Helm
 
@@ -66,10 +60,15 @@ Key configurations available in `helm/kanrigate/values.yaml`:
 
 | Key | Description | Default |
 |-----|-------------|---------|
+| `image.repository` | Docker image repository | `docker.io/muhfalihr/kanrigate` |
 | `env.APP_CLUSTER_NAME` | Name of the target cluster | `kubernetes-admin@kubernetes` |
 | `env.APP_CONTROL_PLANE_ADDRESS` | K8s API Address | `https://kubernetes.default.svc:443` |
+| `env.APP_ADMIN_USERNAME` | Administrator username | `admin` |
+| `secrets.APP_ADMIN_PASSWORD_HASH` | Argon2id hash of the admin password | (Default is 'admin') |
+| `secrets.APP_JWT_SECRET` | Secret key for signing session tokens | `replace-with-a-secure-key` |
 | `service.type` | Kubernetes Service type | `ClusterIP` |
-| `rbac.create` | Auto-create necessary permissions for Kanrigate | `true` |
+
+> **Security Tip**: Always use single quotes around the `APP_ADMIN_PASSWORD_HASH` in `.env` or shell environments to prevent characters like `$` being interpreted as variables.
 
 ## 🔐 RBAC Templates
 
@@ -82,9 +81,11 @@ Kanrigate automatically provisions several `ClusterRoles` to standardise access:
 
 ## 🛡 Security
 
+- **Argon2id Hashing**: Industry-standard protection against brute-force attacks.
+- **JWT Sessions**: Secure, stateless session management with 24-hour expiration.
+- **HttpOnly Cookies**: Prevents XSS-based token theft.
 - **Minimal Footprint**: Uses `debian:bookworm-slim` for the final production image.
 - **RBAC Isolation**: Operates with its own ServiceAccount and specifically scoped ClusterRoles.
-- **No Persistence**: Relies on Kubernetes native storage for all state, ensuring no data fragmentation.
 
 ## 📝 License
 [Insert License Here]

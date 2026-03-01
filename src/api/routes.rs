@@ -1,29 +1,36 @@
 use axum::{
     routing::{get, post, delete},
     Router,
+    middleware,
 };
 use tower_http::trace::TraceLayer;
 use tower_http::cors::CorsLayer;
 use crate::state::AppState;
-use crate::api::handlers;
+use crate::api::{handlers, auth};
 
 pub fn app_router(state: AppState) -> Router {
+    // Routes that require authentication
+    let protected_routes = Router::new()
+        .route("/getTemplates", get(handlers::get_templates))
+        .route("/getNamespaces", get(handlers::get_namespaces))
+        .route("/getServiceAccounts", get(handlers::get_service_accounts))
+        .route("/getFilteredRoleBindings", post(handlers::get_filtered_role_bindings))
+        .route("/getFilteredClusterRoleBindings", post(handlers::get_filtered_cluster_role_bindings))
+        .route("/createServiceAccount", post(handlers::create_service_account))
+        .route("/createSecret", post(handlers::create_secret))
+        .route("/createRoleBinding", post(handlers::create_role_binding))
+        .route("/createClusterRoleBinding", post(handlers::create_cluster_role_binding))
+        .route("/generateK8sConfig", post(handlers::generate_k8s_config))
+        .route("/generateK8sConfigDownloadFile", post(handlers::generate_k8s_config_download))
+        .route("/deleteSecret", delete(handlers::delete_secret))
+        .route("/deleteServiceAccount", delete(handlers::delete_service_account))
+        .route("/deleteRoleBinding", delete(handlers::delete_role_binding))
+        .route("/deleteClusterRoleBinding", delete(handlers::delete_cluster_role_binding))
+        .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth_middleware));
+
     Router::new()
-        .route("/apps/getTemplates", get(handlers::get_templates))
-        .route("/apps/getNamespaces", get(handlers::get_namespaces))
-        .route("/apps/getServiceAccounts", get(handlers::get_service_accounts))
-        .route("/apps/getFilteredRoleBindings", post(handlers::get_filtered_role_bindings))
-        .route("/apps/getFilteredClusterRoleBindings", post(handlers::get_filtered_cluster_role_bindings))
-        .route("/apps/createServiceAccount", post(handlers::create_service_account))
-        .route("/apps/createSecret", post(handlers::create_secret))
-        .route("/apps/createRoleBinding", post(handlers::create_role_binding))
-        .route("/apps/createClusterRoleBinding", post(handlers::create_cluster_role_binding))
-        .route("/apps/generateK8sConfig", post(handlers::generate_k8s_config))
-        .route("/apps/generateK8sConfigDownloadFile", post(handlers::generate_k8s_config_download))
-        .route("/apps/deleteSecret", delete(handlers::delete_secret))
-        .route("/apps/deleteServiceAccount", delete(handlers::delete_service_account))
-        .route("/apps/deleteRoleBinding", delete(handlers::delete_role_binding))
-        .route("/apps/deleteClusterRoleBinding", delete(handlers::delete_cluster_role_binding))
+        .route("/apps/login", post(handlers::login))
+        .nest("/apps", protected_routes)
         .layer(CorsLayer::permissive())
         .layer(
             TraceLayer::new_for_http()

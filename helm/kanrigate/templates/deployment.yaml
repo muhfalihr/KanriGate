@@ -48,6 +48,13 @@ spec:
                   name: {{ include "kanrigate.fullname" $ }}-config
                   key: {{ $key }}
             {{- end }}
+            {{- range $key, $value := .Values.secrets }}
+            - name: {{ $key | replace "." "_" | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kanrigate.fullname" $ }}-secrets
+                  key: {{ $key }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /

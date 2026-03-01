@@ -20,7 +20,7 @@
 	let username = $state('');
 	let templates = $state<string[]>([]);
 	let namespaces = $state<string[]>([]);
-	let selectedTemplate = $state<{ value: string; label: string } | null>(null);
+	let selectedTemplateValue = $state('');
 	let selectedNamespaces = $state<{ value: string; label: string }[]>([]);
 	let roleAssignments = $state<RoleAssignment[]>([]);
 	let clusterAccess = $state('none');
@@ -30,18 +30,18 @@
 		try {
 			const [tRes, nsRes] = await Promise.all([api.getTemplates(), api.getNamespaces()]);
 			templates = tRes.data || [];
-			namespaces = nsRes?.data?.namespaces || [];
-			if (templates.length > 0) selectedTemplate = { value: templates[0], label: templates[0] };
+			namespaces = nsRes.data || [];
+			if (templates.length > 0) selectedTemplateValue = templates[0];
 		} catch (e) {
 			toast.error('Data load failed');
 		}
 	});
 
 	function addRole() {
-		if (!selectedTemplate || selectedNamespaces.length === 0) return;
+		if (!selectedTemplateValue || selectedNamespaces.length === 0) return;
 		roleAssignments = [
 			...roleAssignments,
-			{ template: selectedTemplate.value, namespaces: selectedNamespaces.map((n) => n.value) }
+			{ template: selectedTemplateValue, namespaces: selectedNamespaces.map((n) => n.value) }
 		];
 		selectedNamespaces = [];
 	}
@@ -90,18 +90,14 @@
 					<div class="select-grid">
 						<select
 							aria-label="Select Template"
-							onchange={(e) => {
-								const v = (e.target as HTMLSelectElement).value;
-								selectedTemplate = { value: v, label: v };
-							}}
+							bind:value={selectedTemplateValue}
 						>
 							{#each templates as t}<option value={t}>{t}</option>{/each}
 						</select>
-						<div class="stiff-select">
+						<div class="stiff-select-wrapper">
 							<Select
 								items={namespaces.map((n) => ({ value: n, label: n }))}
-								value={selectedNamespaces}
-								on:select={(e) => (selectedNamespaces = e.detail || [])}
+								bind:value={selectedNamespaces}
 								multiple
 								placeholder="Target Namespaces"
 							/>
@@ -213,17 +209,36 @@
 	.assignment-box {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
-		padding: 1.5rem;
+		gap: 1.25rem;
+		padding: 1.75rem;
 		background: #f8fafb;
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: 12px;
 	}
 
 	.select-grid {
 		display: grid;
-		grid-template-columns: 1fr 2fr;
+		grid-template-columns: 1fr 1.5fr;
 		gap: 0.75rem;
+		align-items: start;
+	}
+
+	.stiff-select-wrapper {
+		background: white;
+		border-radius: 8px;
+		min-height: 42px;
+	}
+
+	.stiff-select-wrapper :global(.svelte-select) {
+		border-color: var(--border) !important;
+		border-radius: 8px !important;
+		min-height: 42px !important;
+	}
+
+	.assignment-box select {
+		height: 42px;
+		padding: 0 1rem;
+		background-color: white;
 	}
 
 	.role-preview {

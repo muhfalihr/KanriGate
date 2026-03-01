@@ -2,5 +2,5 @@ apiVersion: v2
 name: kanrigate
 description: A Helm chart for Kanrigate RBAC Manager
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "1.0.0"

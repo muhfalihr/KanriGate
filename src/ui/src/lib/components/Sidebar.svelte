@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight, Users, Plus, Settings, LayoutGrid } from 'lucide-svelte';
-	import { navigationItems } from '$lib/nav.svelte';
+	import { ChevronLeft, ChevronRight, Users, Plus, LayoutGrid, Github, LogOut } from 'lucide-svelte';
+	import { navigationItems, navigationState } from '$lib/nav.svelte';
 	import type { ComponentType } from 'svelte';
 	import type { Icon } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
@@ -15,18 +15,28 @@
 	let { expanded, activePage, onToggle, onNavigate }: Props = $props();
 
 	const iconMap: Record<string, ComponentType<Icon>> = {
+		LayoutGrid,
 		Users,
-		Plus,
-		Settings
+		Plus
 	};
+
+	function handleNavigate(page: string) {
+		navigationState.activeUserEditUser = null;
+		onNavigate(page);
+	}
 </script>
 
 <aside class="sidebar-wrapper {expanded ? 'expanded' : ''}">
 	<!-- Header Section -->
 	<div class="header-section">
-		<div class="brand-box" onclick={() => onNavigate('user-list')} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && onNavigate('user-list')}>
+		<div class="brand-box" onclick={() => handleNavigate('user-list')} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && handleNavigate('user-list')}>
 			<div class="logo-icon">
-				<LayoutGrid size={20} strokeWidth={2.5} />
+				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M3 7h18" />
+					<path d="M5 11h14" />
+					<path d="M8 7v14" />
+					<path d="M16 7v14" />
+				</svg>
 			</div>
 			{#if expanded}
 				<span class="logo-text" in:fade={{ duration: 150 }}>KANRIGATE</span>
@@ -42,7 +52,7 @@
 				<li>
 					<button
 						class="nav-link {activePage === item.page ? 'active' : ''}"
-						onclick={() => onNavigate(item.page)}
+						onclick={() => handleNavigate(item.page)}
 						title={!expanded ? item.label : ''}
 					>
 						<div class="icon-box">
@@ -64,19 +74,32 @@
 
 	<!-- Footer Section -->
 	<div class="footer-section">
-		<button
-			class="nav-link {activePage === 'settings' ? 'active' : ''}"
-			onclick={() => onNavigate('settings')}
-			title={!expanded ? 'Settings' : ''}
+		<a 
+			href="https://github.com/muhfalihr/KanriGate" 
+			target="_blank" 
+			rel="noopener noreferrer"
+			class="github-link"
+			title={!expanded ? "View on GitHub" : ""}
 		>
 			<div class="icon-box">
-				<Settings size={20} />
+				<Github size={18} />
 			</div>
 			{#if expanded}
-				<span class="link-text" in:fade={{ duration: 150 }}>Settings</span>
+				<span class="link-text" in:fade={{ duration: 150 }}>GitHub Source</span>
 			{/if}
-		</button>
-
+		</a>
+		<a 
+			href="/logout" 
+			class="logout-link"
+			title={!expanded ? "Logout" : ""}
+		>
+			<div class="icon-box">
+				<LogOut size={18} />
+			</div>
+			{#if expanded}
+				<span class="link-text" in:fade={{ duration: 150 }}>Logout</span>
+			{/if}
+		</a>
 		<button 
 			class="collapse-btn" 
 			onclick={() => onToggle(!expanded)}
@@ -168,7 +191,7 @@
 		border-radius: 8px;
 		color: #aeb9b9;
 		cursor: pointer;
-		transition: var(--transition);
+		transition: all 0.2s;
 		position: relative;
 		gap: 0.75rem; /* gap-x-3: Jarak ikon dan teks */
 	}
@@ -220,6 +243,40 @@
 		gap: 0.4rem;
 	}
 
+	.github-link {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		padding: 0.5rem;
+		text-decoration: none;
+		color: #7f8c8d;
+		border-radius: 8px;
+		transition: all 0.2s;
+		gap: 0.75rem;
+	}
+
+	.github-link:hover {
+		color: #ffffff;
+		background: rgba(255, 255, 255, 0.05);
+	}
+
+	.logout-link {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		padding: 0.5rem;
+		text-decoration: none;
+		color: #e74c3c;
+		border-radius: 8px;
+		transition: all 0.2s;
+		gap: 0.75rem;
+	}
+
+	.logout-link:hover {
+		color: #ff7675;
+		background: rgba(231, 76, 60, 0.1);
+	}
+
 	.collapse-btn {
 		width: 100%;
 		display: flex;
@@ -232,6 +289,7 @@
 		color: #7f8c8d;
 		cursor: pointer;
 		gap: 0.75rem;
+		transition: all 0.2s;
 	}
 
 	.collapse-btn:hover {

@@ -3,7 +3,7 @@
 replicaCount: 1
 
 image:
-  repository: kanrigate
+  repository: docker.io/muhfalihr/kanrigate
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -89,6 +89,10 @@ env:
   APP_PORT: "3232"
   APP_CLUSTER_NAME: "kubernetes-admin@kubernetes"
   APP_CONTROL_PLANE_ADDRESS: "https://kubernetes.default.svc:443"
+  APP_ADMIN_USERNAME: "admin"
 
 # Secrets for sensitive data
-secrets: {}
+secrets:
+  # Default hash for password 'admin' using Argon2id
+  APP_ADMIN_PASSWORD_HASH: "$argon2id$v=19$m=19456,t=2,p=1$Z3YxeXJ3emx6cWZ6Z3YxeXJ3emx6cWZ6$R0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0U0p0"
+  APP_JWT_SECRET: "replace-with-a-secure-secret-key"

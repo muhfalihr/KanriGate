@@ -14,15 +14,16 @@ export const navigationItems: NavItem[] = [
 		label: 'Create New User',
 		icon: 'Plus',
 		page: 'new-user'
-	},
-	{
-		label: 'Settings',
-		icon: 'Settings',
-		page: 'settings'
 	}
 ];
 
+export interface User {
+	id: number;
+	name: string;
+}
+
 export const navigationState = $state({
 	activePage: 'user-list',
-	isSidebarExpanded: false
+	isSidebarExpanded: false,
+	activeUserEditUser: null as User | null
 });

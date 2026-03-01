@@ -322,7 +322,7 @@ impl KubeOps {
         let token = String::from_utf8(token_bytes.clone())?;
         let ca_cert_b64 = BASE64.encode(ca_cert_bytes);
 
-        let context_name = format!("{}-{}@{}", username, namespace, cluster_name);
+        let context_name = format!("{}@{}", username, cluster_name);
 
         let config = KubeConfig {
             api_version: "v1".to_string(),

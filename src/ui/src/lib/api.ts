@@ -1,101 +1,177 @@
 import { PUBLIC_API_BASE_URL } from '$env/static/public';
+import { browser } from '$app/environment';
+import { goto } from '$app/navigation';
 
 const BASE_URL = PUBLIC_API_BASE_URL || 'http://localhost:3232/apps';
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+// Add token management for client-side use
+let clientToken: string | null = null;
+
+export function setClientToken(token: string | null) {
+	if (browser) {
+		clientToken = token;
+	}
+}
+
+async function request<T>(endpoint: string, options: RequestInit & { token?: string } = {}): Promise<T> {
 	const url = `${BASE_URL}/${endpoint}`;
-	const headers = {
+	const { token, ...fetchOptions } = options;
+
+	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',
-		...options.headers
+		...(fetchOptions.headers as Record<string, string>)
 	};
 
-	const response = await fetch(url, { ...options, headers });
-
-	if (!response.ok) {
-		const text = await response.text();
-		throw new Error(text || `Error ${response.status}: ${response.statusText}`);
+	// Use provided token (explicitly passed, e.g. from SSR load function)
+	// or fall back to client-side stored token if in browser
+	const authToken = token || (browser ? clientToken : null);
+	if (authToken) {
+		headers['Authorization'] = `Bearer ${authToken}`;
 	}
 
-	const contentType = response.headers.get('content-type');
-	if (contentType && contentType.includes('application/json')) {
-		return (await response.json()) as T;
+	// Create a stable abort controller for this specific request
+	const internalController = new AbortController();
+	const timeoutId = setTimeout(() => {
+		console.warn(`[API] Request timeout for ${endpoint}`);
+		internalController.abort();
+	}, 15000);
+
+	// Link external signal if provided
+	const onExternalAbort = () => internalController.abort();
+	if (fetchOptions.signal) {
+		fetchOptions.signal.addEventListener('abort', onExternalAbort);
 	}
-	return (await response.text()) as unknown as T;
+
+	try {
+		const response = await fetch(url, { 
+			...fetchOptions, 
+			headers,
+			signal: internalController.signal 
+		});
+
+		if (response.status === 401 && browser && endpoint !== 'login') {
+			console.error(`[API] 401 Unauthorized for ${endpoint}. Redirecting to logout.`);
+			goto('/logout');
+			throw new Error('Unauthorized');
+		}
+
+		if (!response.ok) {
+			const text = await response.text();
+			throw new Error(text || `Error ${response.status}: ${response.statusText}`);
+		}
+
+		const contentType = response.headers.get('content-type');
+		if (contentType && contentType.includes('application/json')) {
+			return (await response.json()) as T;
+		}
+		return (await response.text()) as unknown as T;
+	} finally {
+		clearTimeout(timeoutId);
+		if (fetchOptions.signal) {
+			fetchOptions.signal.removeEventListener('abort', onExternalAbort);
+		}
+	}
 }
 
 export interface ApiResponse<T> {
+	meta_data: {
+		status: number;
+		message: string;
+		exec_time: number;
+	};
 	data: T;
 }
 
-export interface ServiceAccountsResponse {
-	service_accounts: string[];
-}
-
 export interface RoleBindingsResponse {
-	role_bindings_filtered: Record<string, Record<string, boolean>>;
+	[namespace: string]: Record<string, boolean>;
 }
 
-export interface KubeConfigResponse {
-	kube_config_dump: string;
+export interface ClusterRoleBindingsResponse {
+	[permission: string]: boolean;
+}
+
+export interface LoginRequest {
+	username: string;
+	password: string;
+}
+
+export interface AuthBody {
+	access_token: string;
+	token_type: string;
 }
 
 export const api = {
-	getTemplates: () => request<ApiResponse<string[]>>('getTemplates'),
-	getNamespaces: () => request<ApiResponse<{ namespaces: string[] }>>('getNamespaces'),
-	getUsers: () => request<ServiceAccountsResponse>('getServiceAccounts'),
-
-	getRoleBindings: (username: string) =>
-		request<ApiResponse<RoleBindingsResponse>>('getFilteredRoleBindings', {
+	login: (credentials: LoginRequest, options: RequestInit = {}) =>
+		request<ApiResponse<AuthBody>>('login', {
 			method: 'POST',
-			body: JSON.stringify({ username })
+			body: JSON.stringify(credentials),
+			...options
 		}),
 
-	getClusterRoleBindings: (username: string) =>
-		request<ApiResponse<RoleBindingsResponse>>('getFilteredClusterRoleBindings', {
+	getTemplates: (options: RequestInit & { token?: string } = {}) => request<ApiResponse<string[]>>('getTemplates', options),
+	getNamespaces: (options: RequestInit & { token?: string } = {}) => request<ApiResponse<string[]>>('getNamespaces', options),
+	getUsers: (options: RequestInit & { token?: string } = {}) => request<ApiResponse<string[]>>('getServiceAccounts', options),
+
+	getRoleBindings: (username: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<RoleBindingsResponse>>(`getFilteredRoleBindings?username=${encodeURIComponent(username)}`, {
 			method: 'POST',
-			body: JSON.stringify({ username })
+			...options
 		}),
 
-	createServiceAccount: (username: string) =>
-		request(`createServiceAccount?username=${username}`, {
-			method: 'POST'
-		}),
-
-	createSecret: (username: string) =>
-		request(`createSecret?username=${username}`, {
-			method: 'POST'
-		}),
-
-	createRoleBinding: (username: string, namespace: string, permission: string) =>
-		request('createRoleBinding', {
+	getClusterRoleBindings: (username: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<ClusterRoleBindingsResponse>>(`getFilteredClusterRoleBindings?username=${encodeURIComponent(username)}`, {
 			method: 'POST',
-			body: JSON.stringify({ username, namespace, permission })
+			...options
 		}),
 
-	createClusterRoleBinding: (username: string, permission: string) =>
-		request('createClusterRoleBinding', {
+	createServiceAccount: (username: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`createServiceAccount?username=${encodeURIComponent(username)}`, {
 			method: 'POST',
-			body: JSON.stringify({ username, permission })
+			...options
 		}),
 
-	generateConfig: (username: string, namespace: string) =>
-		request<ApiResponse<KubeConfigResponse>>(`generateK8sConfig?username=${username}&namespace=${namespace}`, {
-			method: 'POST'
+	createSecret: (username: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`createSecret?username=${encodeURIComponent(username)}`, {
+			method: 'POST',
+			...options
 		}),
 
-	deleteServiceAccount: (username: string) =>
-		request(`deleteServiceAccount?username=${username}`, { method: 'DELETE' }),
-
-	deleteSecret: (username: string) =>
-		request(`deleteSecret?username=${username}`, { method: 'DELETE' }),
-
-	deleteRoleBinding: (username: string, namespace: string, permission: string) =>
-		request(`deleteRoleBinding?username=${username}&namespace=${namespace}&permission=${permission}`, {
-			method: 'DELETE'
+	createRoleBinding: (username: string, namespace: string, permission: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`createRoleBinding?username=${encodeURIComponent(username)}&namespace=${encodeURIComponent(namespace)}&permission=${encodeURIComponent(permission)}`, {
+			method: 'POST',
+			...options
 		}),
 
-	deleteClusterRoleBinding: (username: string, permission: string) =>
-		request(`deleteClusterRoleBinding?username=${username}&permission=${permission}`, {
-			method: 'DELETE'
+	createClusterRoleBinding: (username: string, permission: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`createClusterRoleBinding?username=${encodeURIComponent(username)}&permission=${encodeURIComponent(permission)}`, {
+			method: 'POST',
+			...options
+		}),
+
+	generateConfig: (username: string, namespace: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`generateK8sConfig?username=${encodeURIComponent(username)}&namespace=${encodeURIComponent(namespace)}`, {
+			method: 'POST',
+			...options
+		}),
+
+	getGenerateConfigDownloadUrl: (username: string, namespace: string) =>
+		`${BASE_URL}/generateK8sConfigDownloadFile?username=${encodeURIComponent(username)}&namespace=${encodeURIComponent(namespace)}`,
+
+	deleteServiceAccount: (username: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`deleteServiceAccount?username=${encodeURIComponent(username)}`, { method: 'DELETE', ...options }),
+
+	deleteSecret: (username: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`deleteSecret?username=${encodeURIComponent(username)}`, { method: 'DELETE', ...options }),
+
+	deleteRoleBinding: (username: string, namespace: string, permission: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`deleteRoleBinding?username=${encodeURIComponent(username)}&namespace=${encodeURIComponent(namespace)}&permission=${encodeURIComponent(permission)}`, {
+			method: 'DELETE',
+			...options
+		}),
+
+	deleteClusterRoleBinding: (username: string, permission: string, options: RequestInit & { token?: string } = {}) =>
+		request<ApiResponse<string>>(`deleteClusterRoleBinding?username=${encodeURIComponent(username)}&permission=${encodeURIComponent(permission)}`, {
+			method: 'DELETE',
+			...options
 		})
 };
