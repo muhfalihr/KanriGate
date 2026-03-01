@@ -88,4 +88,5 @@ Kanrigate automatically provisions several `ClusterRoles` to standardise access:
 - **RBAC Isolation**: Operates with its own ServiceAccount and specifically scoped ClusterRoles.
 
 ## 📝 License
-[Insert License Here]
+
+This project is licensed under the **Apache License 2.0**. See the [LICENSE](LICENSE) file for details.
