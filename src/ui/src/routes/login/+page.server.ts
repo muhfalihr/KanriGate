@@ -31,18 +31,27 @@ export const actions: Actions = {
 		} catch (error: any) {
 			if (error.status === 303) throw error;
 			
-			// Try to parse the error message if it's a JSON string from our API
-			let message = error.message || 'An unexpected error occurred';
-			try {
-				const errorData = JSON.parse(message);
-				if (errorData?.meta_data?.message) {
-					message = errorData.meta_data.message;
+			let message = 'An unexpected error occurred';
+			let status = error.status || 500;
+
+			if (error.message) {
+				try {
+					// Check if message is JSON (common for our API responses)
+					const errorData = JSON.parse(error.message);
+					if (errorData?.meta_data?.message) {
+						message = errorData.meta_data.message;
+						if (errorData.meta_data.status) {
+							status = errorData.meta_data.status;
+						}
+					} else {
+						message = error.message;
+					}
+				} catch (e) {
+					message = error.message;
 				}
-			} catch (e) {
-				// Not JSON, keep original message
 			}
 
-			return fail(error.status === 401 ? 401 : 500, { message });
+			return fail(status === 401 ? 401 : (status >= 400 && status < 600 ? status : 500), { message });
 		}
 	}
 };

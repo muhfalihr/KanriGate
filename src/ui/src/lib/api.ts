@@ -1,10 +1,10 @@
-import { PUBLIC_API_BASE_URL } from '$env/static/public';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
+import { env } from '$env/dynamic/public';
 
-// Use PUBLIC_API_BASE_URL if set, otherwise use relative path '/apps'
-// This works because the SvelteKit server proxies /apps to the backend
-const BASE_URL = PUBLIC_API_BASE_URL || '/apps';
+// Default ke '/apps' (relatif) agar diproses oleh SvelteKit proxy di server-side.
+// Ini mencegah localhost terbawa (hardcoded) saat build Docker.
+const BASE_URL = env.PUBLIC_API_BASE_URL || '/apps';
 
 // Add token management for client-side use
 let clientToken: string | null = null;
@@ -59,7 +59,9 @@ async function request<T>(endpoint: string, options: RequestInit & { token?: str
 
 		if (!response.ok) {
 			const text = await response.text();
-			throw new Error(text || `Error ${response.status}: ${response.statusText}`);
+			const error: any = new Error(text || `Error ${response.status}: ${response.statusText}`);
+			error.status = response.status;
+			throw error;
 		}
 
 		const contentType = response.headers.get('content-type');

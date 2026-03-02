@@ -34,16 +34,16 @@ Kanrigate is designed to run as a single containerized unit:
 ### 🔐 Generate Admin Hash
 Use the built-in tool to generate a secure Argon2id hash for your admin password:
 
-1.  **Edit the tool**:
-    Open `src/bin/hash_tool.rs` and change `let password = "password";` to your desired password.
-
-2.  **Run the tool**:
+1.  **Run the tool**:
+    Provide your desired password as an argument (replace `your_password` below):
     ```bash
-    cargo run --bin hash_tool
+    cargo run --bin hash_tool -- your_password
     ```
 
-3.  **Copy the output**:
-    Copy the generated hash into your `values.yaml` under `secrets.APP_ADMIN_PASSWORD_HASH`.
+2.  **Copy the output**:
+    Copy the generated hash into your `values.yaml` or `.env` file as `APP_ADMIN_PASSWORD_HASH`.
+
+    > **Note**: If you run it without arguments, it will default to 'admin' for demo purposes.
 
 ## ☸️ Deployment with Helm
 
