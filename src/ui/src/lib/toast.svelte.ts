@@ -10,7 +10,7 @@ export function createToast() {
 	let toasts = $state<Toast[]>([]);
 
 	function add(message: string, type: ToastType = 'info', duration = 3000) {
-		const id = crypto.randomUUID();
+		const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 11);
 		toasts = [...toasts, { id, message, type }];
 
 		if (duration > 0) {

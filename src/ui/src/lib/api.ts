@@ -2,7 +2,9 @@ import { PUBLIC_API_BASE_URL } from '$env/static/public';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 
-const BASE_URL = PUBLIC_API_BASE_URL || 'http://localhost:3232/apps';
+// Use PUBLIC_API_BASE_URL if set, otherwise use relative path '/apps'
+// This works because the SvelteKit server proxies /apps to the backend
+const BASE_URL = PUBLIC_API_BASE_URL || '/apps';
 
 // Add token management for client-side use
 let clientToken: string | null = null;
