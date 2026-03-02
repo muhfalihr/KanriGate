@@ -1,9 +1,8 @@
 use axum::{
-    routing::{get, post, delete},
-    Router,
-    middleware,
+    Router, http::{HeaderValue, Method, header}, middleware, routing::{delete, get, post}
 };
-use tower_http::trace::TraceLayer;
+use jsonwebtoken::Header;
+use tower_http::{cors::{AllowOrigin, Cors}, trace::TraceLayer};
 use tower_http::cors::CorsLayer;
 use crate::state::AppState;
 use crate::api::{handlers, auth};
@@ -28,10 +27,23 @@ pub fn app_router(state: AppState) -> Router {
         .route("/deleteClusterRoleBinding", delete(handlers::delete_cluster_role_binding))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth_middleware));
 
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::predicate(|_, _| true))
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::DELETE,
+            Method::OPTIONS
+        ])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION
+        ]);
+
     Router::new()
         .route("/apps/login", post(handlers::login))
         .nest("/apps", protected_routes)
-        .layer(CorsLayer::permissive())
+        .layer(cors)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(|request: &axum::http::Request<_>| {
